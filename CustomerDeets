@@ -1,0 +1,44 @@
+Customers details(customer name, address,mobile) are maintained in a file in hdfs. 
+Create the customer details file with 10 records and do the following. 
+Use keyvalueinput format as the input format. Consider customer name as key. 
+Separate the customer name and address,mobile using “,” separator in the text file. (Ex: sam,233 first street, chennai,9999967891 (or) sam,233 first street chennai 9999967891 ). Customer name is the key and Address, Mobile are the value. Search a particular customer detail.
+
+import java.io.IOException;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.conf.*;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.mapreduce.lib.input.*;
+import org.apache.hadoop.mapreduce.lib.output.*;
+
+public class wc 
+{
+	public static class Map extends Mapper<Text, Text, Text, Text> 
+	{
+		String c="Lorax";
+		public void map(Text key, Text value, Context context) throws IOException, InterruptedException 
+        {
+        	String line=key.toString();
+      	  	if(c.equalsIgnoreCase(line))
+      	  		context.write(key,value);	
+               
+         }                
+     }
+	
+	public static void main(String[] args) throws Exception 
+	{
+		Configuration conf = new Configuration();
+		conf.set("mapreduce.input.keyvaluelinerecordreader.key.value.separator",",");
+		Job job = new Job(conf, "Search");
+		job.setJarByClass(wc.class);	
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(IntWritable.class);
+		job.setMapperClass(Map.class);
+    	job.setNumReduceTasks(0);
+    	job.setInputFormatClass(KeyValueTextInputFormat.class);
+    	job.setOutputFormatClass(TextOutputFormat.class);
+    	FileInputFormat.addInputPath(job, new Path(args[0]));
+    	FileOutputFormat.setOutputPath(job, new Path(args[1]));
+    	job.waitForCompletion(true);
+     }
+}
