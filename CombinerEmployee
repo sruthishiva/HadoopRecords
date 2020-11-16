@@ -1,0 +1,59 @@
+import java.io.IOException;
+import java.util.*;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.conf.*;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.mapreduce.Mapper.Context;
+import org.apache.hadoop.mapreduce.lib.input.*;
+import org.apache.hadoop.mapreduce.lib.output.*;
+
+
+
+public class wc
+{
+        public static class Map extends Mapper<LongWritable, Text, Text, Text>
+        {
+                IntWritable one = new IntWritable(1);
+        int c=0;
+        Text word = new Text("Total Records");
+        Text cnt = new Text();
+
+        public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException
+        {
+                String[] emp = value.toString().split(",");
+            float exp=Float.parseFloat(emp[0]);
+            int sal=Integer.parseInt(emp[1]);
+            String myValue = emp[0] + ", " + emp[1] + ", " + emp[2];
+            if(exp>15 && sal>60000)
+            {
+                context.write(new Text(emp[3]),new Text(myValue));
+                c++;
+            }
+         }
+
+         public void cleanup(Context context) throws IOException, InterruptedException
+         {
+                 String count = String.valueOf(c);
+             cnt.set(count);
+             context.write(word,cnt);
+         }
+     }
+
+        public static void main(String[] args) throws Exception
+        {
+            Configuration conf = new Configuration();
+            Job job = new Job(conf, "wc");
+            job.setJarByClass(wc.class);
+            job.setOutputKeyClass(Text.class);
+            job.setOutputValueClass(IntWritable.class);
+            job.setMapperClass(Map.class);
+            job.setNumReduceTasks(0);
+            //job.setReducerClass(Reduce.class);
+            job.setInputFormatClass(TextInputFormat.class);
+            job.setOutputFormatClass(TextOutputFormat.class);
+            FileInputFormat.addInputPath(job, new Path(args[0]));
+            FileOutputFormat.setOutputPath(job, new Path(args[1]));
+            job.waitForCompletion(true);
+     }
+}
